@@ -1,4 +1,4 @@
-export type HorizonTierId = 'free' | 'strategist' | 'grandCru' | 'api';
+export type HorizonTierId = 'free' | 'strategist' | 'grandCru' | 'aiAgent';
 
 export interface HorizonPlan {
   id: HorizonTierId;
@@ -35,13 +35,12 @@ export const horizonPlans: HorizonPlan[] = [
     cadence: 'per month',
     audience: 'Active mini-league players',
     summary: 'The original LP engine packaged for practical weekly decisions.',
-    cta: 'Upgrade to Strategist',
+    cta: 'Select Strategist',
     features: [
       'Linear-programmed optimal squad',
       'Safe, Risky, and Value modes',
       'Team sync and 1-for-1 transfers',
-      'Rules-based chip guidance',
-      'Historical expected-vs-actual tracking'
+      'Rules-based chip guidance'
     ]
   },
   {
@@ -63,30 +62,28 @@ export const horizonPlans: HorizonPlan[] = [
     ]
   },
   {
-    id: 'api',
-    name: 'Horizon API',
-    price: 'Custom',
-    cadence: 'for teams',
-    audience: 'Creators, communities, tools',
-    summary: 'Embed the optimization engine into content, bots, and partner products.',
-    cta: 'Request access',
+    id: 'aiAgent',
+    name: 'AI Optimizer Agent',
+    price: 'GBP 49.99',
+    cadence: 'per month',
+    audience: 'Hardcore rank maximizers',
+    summary: 'The flagship Hybrid FPL Agent combining LLM reasoning with mathematical simulation.',
+    cta: 'Upgrade to FPL Optimizer',
     features: [
-      'API keys and usage reporting',
-      'White-label recommendations',
-      'Creator and community integrations',
-      'Custom league analysis',
-      'Commercial support'
+      'Conversational AI Chat Interface',
+      'Press conference & injury news parser',
+      'Interactive transfer path scenarios',
+      'Autonomous team planner and advisor'
     ]
   }
 ];
 
 export const tierFeatureMatrix = [
-  { feature: 'Optimal squad', free: 'Basic', strategist: 'LP', grandCru: 'LP + horizon', api: 'Custom' },
-  { feature: 'Team sync', free: 'Locked', strategist: 'Included', grandCru: 'Included', api: 'Included' },
-  { feature: 'Transfer logic', free: 'Locked', strategist: '1-for-1', grandCru: 'Multi-transfer', api: 'Custom' },
-  { feature: 'Chip advice', free: 'Locked', strategist: 'Rules', grandCru: 'Simulated', api: 'Custom' },
-  { feature: 'Lookahead', free: '1 GW', strategist: '1 GW', grandCru: '8 GWs', api: 'Configurable' },
-  { feature: 'Risk modes', free: 'Safe', strategist: 'All modes', grandCru: 'All modes + variance', api: 'Configurable' },
-  { feature: 'Fresh xP data', free: 'Standard', strategist: 'Standard', grandCru: 'Deadline sniper', api: 'SLA option' }
+  { feature: 'Optimal squad', free: 'Basic', strategist: 'LP', grandCru: 'LP + horizon (8 GW)', aiAgent: 'LP + Multiverse' },
+  { feature: 'Team sync', free: 'Locked', strategist: 'Included', grandCru: 'Included', aiAgent: 'Included' },
+  { feature: 'Transfer logic', free: 'Locked', strategist: '1-for-1', grandCru: 'Multi-transfer', aiAgent: 'Multi-transfer' },
+  { feature: 'Chip advice', free: 'Locked', strategist: 'Rules', grandCru: 'Simulated', aiAgent: 'Simulated' },
+  { feature: 'Lookahead', free: '1 GW', strategist: '1 GW', grandCru: '8 GWs', aiAgent: '8 GWs' },
+  { feature: 'Conversational UI', free: 'Locked', strategist: 'Locked', grandCru: 'Locked', aiAgent: 'Included' },
+  { feature: 'News & Press Parser', free: 'Locked', strategist: 'Locked', grandCru: 'Locked', aiAgent: 'Included' }
 ];
-

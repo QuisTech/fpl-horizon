@@ -1,21 +1,21 @@
-import { Check, Crown, Lock, Rocket, ShieldCheck, Sparkles } from 'lucide-react';
+import { Check, Crown, Lock, MessageSquareCode, Rocket, ShieldCheck, Sparkles } from 'lucide-react';
 import { horizonPlans, tierFeatureMatrix } from '../lib/plans';
 import { cn } from '../lib/utils';
 
 const productLadder = [
   {
-    name: 'Horizon Strategist',
-    label: 'Original app',
-    icon: ShieldCheck,
-    description: 'A weekly LP optimizer for managers who want a clean answer fast: optimal squad, risk modes, team sync, and practical transfer tips.',
-    metrics: ['1 GW lookahead', 'LP squad solver', 'Rules-based chips']
-  },
-  {
     name: 'Horizon Grand Cru',
     label: 'V3 engine',
     icon: Crown,
     description: 'The premium multiverse planner: beam search, multi-transfer packages, sniper xP data, variance-aware decisions, and simulated chip timing.',
-    metrics: ['8 GW horizon', '5,200+ paths', 'Deadline data']
+    metrics: ['8 GW horizon', '5,200+ paths', 'Visual simulator']
+  },
+  {
+    name: 'AI Optimizer Agent',
+    label: 'Flagship AI (Optimizer)',
+    icon: MessageSquareCode,
+    description: 'The ultimate hybrid assistant: conversational team analysis, automated press conference/injury parsing, and interactive path simulations.',
+    metrics: ['8 GW lookahead', 'Conversational UI', 'News-aware solver']
   }
 ];
 
@@ -35,10 +35,10 @@ export const HorizonPositioning = () => {
             </div>
             <div>
               <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                One brand, two levels of decision support.
+                FPL Horizon: The visual multiverse planner.
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-                FPL Horizon turns the original Strategist app into the entry product, then positions Grand Cru as the premium simulation engine for serious rank climbers.
+                FPL Horizon provides the ultimate visual interface for 8-GW path planning, letting serious rank climbers model transfers and chip timing across 5,200+ decision paths.
               </p>
             </div>
           </div>
@@ -85,7 +85,7 @@ export const HorizonPositioning = () => {
           >
             {plan.featured && (
               <div className="absolute right-4 top-4 rounded bg-fpl-green px-2 py-1 text-[8px] font-black uppercase tracking-widest text-slate-950">
-                Best edge
+                Active Tier
               </div>
             )}
             <div>
@@ -110,7 +110,7 @@ export const HorizonPositioning = () => {
             <button
               className={cn(
                 'mt-5 w-full rounded-lg px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-colors',
-                plan.featured ? 'bg-fpl-green text-slate-950 hover:bg-fpl-green/90' : 'bg-slate-950 text-white border border-fpl-border hover:bg-slate-900'
+                plan.featured ? 'bg-fpl-green/10 text-fpl-green border border-fpl-green/30 cursor-default' : 'bg-slate-950 text-white border border-fpl-border hover:bg-slate-900'
               )}
             >
               {plan.cta}
@@ -123,11 +123,11 @@ export const HorizonPositioning = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-fpl-border p-4">
           <div>
             <h3 className="text-sm font-black uppercase tracking-widest text-white">Feature gating map</h3>
-            <p className="mt-1 text-[11px] text-slate-500">Use this table to wire Supabase roles and Stripe subscription states next.</p>
+            <p className="mt-1 text-[11px] text-slate-500">Stripe ready subscription roles and database gates mapped here.</p>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-fpl-border bg-slate-950 px-3 py-2 text-[10px] font-bold uppercase text-slate-400">
             <Lock className="h-3.5 w-3.5 text-fpl-green" />
-            Stripe-ready tiers
+            Product Tiers
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -137,8 +137,8 @@ export const HorizonPositioning = () => {
                 <th className="px-4 py-3">Feature</th>
                 <th className="px-4 py-3">Free</th>
                 <th className="px-4 py-3">Strategist</th>
-                <th className="px-4 py-3">Grand Cru</th>
-                <th className="px-4 py-3">API</th>
+                <th className="px-4 py-3 font-black text-fpl-green">Grand Cru</th>
+                <th className="px-4 py-3">AI Agent (Optimizer)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-fpl-border text-[11px] text-slate-300">
@@ -159,27 +159,26 @@ export const HorizonPositioning = () => {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-fpl-border bg-slate-950/50 p-5">
           <Rocket className="h-5 w-5 text-fpl-green" />
-          <h3 className="mt-3 text-sm font-black uppercase tracking-widest text-white">Launch copy</h3>
+          <h3 className="mt-3 text-sm font-black uppercase tracking-widest text-white">Multiverse solver</h3>
           <p className="mt-2 text-xs leading-relaxed text-slate-400">
-            Stop guessing before the deadline. FPL Horizon compares simple optimizer picks with an 8-gameweek simulation engine built for transfer, captaincy, and chip decisions.
+            FPL Horizon runs an 8-GW search trajectory to evaluate every transfer, point hit, and chip trigger in parallel.
           </p>
         </div>
         <div className="rounded-2xl border border-fpl-border bg-slate-950/50 p-5">
           <Sparkles className="h-5 w-5 text-fpl-green" />
           <h3 className="mt-3 text-sm font-black uppercase tracking-widest text-white">Upgrade trigger</h3>
           <p className="mt-2 text-xs leading-relaxed text-slate-400">
-            Free users see locked Grand Cru features after they sync a team or switch from Safe mode, creating a natural path from curiosity to paid planning.
+            Unlock the ultimate AI Agent on FPL Optimizer to converse about your squad plans and parse press conferences.
           </p>
         </div>
         <div className="rounded-2xl border border-fpl-border bg-slate-950/50 p-5">
           <ShieldCheck className="h-5 w-5 text-fpl-green" />
           <h3 className="mt-3 text-sm font-black uppercase tracking-widest text-white">Trust notes</h3>
           <p className="mt-2 text-xs leading-relaxed text-slate-400">
-            Keep public copy grounded: entertainment-only, no affiliation with Fantasy Premier League, transparent data freshness, and no guaranteed rank promises.
+            Keep disclaimers clear: entertainment-only, no official relationship to Fantasy Premier League, and data fresh for current deadlines.
           </p>
         </div>
       </section>
     </div>
   );
 };
-
