@@ -148,7 +148,7 @@ export const HorizonPositioning = () => {
                   <td className="px-4 py-3">{row.free}</td>
                   <td className="px-4 py-3">{row.strategist}</td>
                   <td className="px-4 py-3 text-fpl-green font-bold">{row.grandCru}</td>
-                  <td className="px-4 py-3">{row.api}</td>
+                  <td className="px-4 py-3">{row.aiAgent}</td>
                 </tr>
               ))}
             </tbody>
