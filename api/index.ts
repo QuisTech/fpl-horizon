@@ -83,25 +83,9 @@ export class FPLService {
     return result;
   }
 
-  static calculatePlayerScore(player: FPLPlayer, fixtures: FPLFixture[], nextEventId: number, riskMode: string): number {
-    let score = player.total_points / (player.now_cost / 10);
-    const form = parseFloat(player.form) || 0;
-    score += form * 2;
+  static calculatePlayerScore(baseXp: number, player: FPLPlayer, riskMode: string): number {
+    let score = baseXp;
     
-    const xG = parseFloat(player.expected_goals) || 0;
-    const xA = parseFloat(player.expected_assists) || 0;
-    score += (xG * 5) + (xA * 3);
-
-    const upcoming = fixtures.filter(f => f.event >= nextEventId && f.event < nextEventId + 3)
-      .filter(f => f.team_h === player.team || f.team_a === player.team);
-
-    let difficultyMultiplier = 1.0;
-    upcoming.forEach(f => {
-      const fdr = f.team_h === player.team ? f.team_h_difficulty : f.team_a_difficulty;
-      difficultyMultiplier *= (1 + (3 - fdr) * 0.1);
-    });
-    score *= difficultyMultiplier;
-
     if (riskMode !== 'value') {
       if (riskMode === 'aggressive' && player.selected_by_percent && parseFloat(player.selected_by_percent) < 5) {
         score *= 1.25;
@@ -117,7 +101,7 @@ export class FPLService {
     return score;
   }
 
-  static mapToScoredPlayer(p: FPLPlayer, teams: FPLTeam[], fixtures: FPLFixture[], nextEventId: number, riskMode: string): ScoredPlayer {
+  static mapToScoredPlayer(p: FPLPlayer, teams: FPLTeam[], fixtures: FPLFixture[], nextEventId: number, riskMode: string, baseXp: number = 0): ScoredPlayer {
     const posMap: Record<number, string> = { 1: "GKP", 2: "DEF", 3: "MID", 4: "FWD" };
     const position = posMap[p.element_type] || "MID";
     const team = teams.find(t => t.id === p.team);
@@ -127,8 +111,8 @@ export class FPLService {
       position,
       team_name: team?.name || "Unknown",
       team_short_name: team?.short_name || "UNK",
-      score: this.calculatePlayerScore(p, fixtures, nextEventId, riskMode),
-      xP: 0,
+      score: this.calculatePlayerScore(baseXp, p, riskMode),
+      xP: baseXp,
       ppm: (p.total_points || 0) / (p.now_cost / 10),
       next_fixtures: [],
       isCaptain: false,
@@ -141,10 +125,9 @@ export class FPLService {
 
     const oracle = new CSVOracle('data/fplform_scraped.csv', players, riskMode, fixtures, teams, nextEventId);
 
-    const available = players.filter(p => p.status === 'a' || p.chance_of_playing_next_round === 100);
     const scored = available.map(p => {
-      const mapped = this.mapToScoredPlayer(p, teams, fixtures, nextEventId, riskMode);
-      mapped.xP = oracle.getXP(p.id, nextEventId);
+      const baseXp = oracle.getXP(p.id, nextEventId);
+      const mapped = this.mapToScoredPlayer(p, teams, fixtures, nextEventId, riskMode, baseXp);
       mapped.eo = oracle.getTop1kEO?.(p.id) ?? 0;
       mapped.ownership = oracle.getTop1kOwnership?.(p.id) ?? parseFloat(p.selected_by_percent || "0") ?? 0;
       return mapped;
@@ -164,15 +147,38 @@ export class FPLService {
     const others = squad.filter(p => !lockedIds.has(p.id)).sort(sortByScore);
     const startingXI = [...mandatory, ...others.slice(0, 11 - mandatory.length)].filter(Boolean) as ScoredPlayer[];
     
+    const startingIds = new Set(startingXI.map(p => p.id));
+    const bench = squad.filter(p => !startingIds.has(p.id)).sort((a, b) => {
+      if (a.position === 'GKP' && b.position !== 'GKP') return -1;
+      if (a.position !== 'GKP' && b.position === 'GKP') return 1;
+      return (b.xP || 0) - (a.xP || 0);
+    });
+
+    // Captaincy Strategy: Heavily favor Attackers (MID/FWD) over DEF/GKP due to higher point ceilings
+    const captaincyCandidates = [...startingXI].sort((a, b) => {
+      const aWeight = (a.position === 'MID' || a.position === 'FWD') ? 1.2 : 1.0;
+      const bWeight = (b.position === 'MID' || b.position === 'FWD') ? 1.2 : 1.0;
+      return ((b.score || 0) * bWeight) - ((a.score || 0) * aWeight);
+    });
+
+    const captain = captaincyCandidates[0] || null;
+    const viceCaptain = captaincyCandidates[1] || null;
+
+    if (captain) {
+      const squadPlayer = squad.find(p => p.id === captain.id);
+      if (squadPlayer) squadPlayer.isCaptain = true;
+    }
+    
+    if (viceCaptain) {
+      const squadPlayer = squad.find(p => p.id === viceCaptain.id);
+      if (squadPlayer) squadPlayer.isViceCaptain = true;
+    }
+
     return { 
       squad, startingXI, 
-      bench: squad.filter(p => !startingXI.find(x => x.id === p.id)).sort((a, b) => {
-        if (a.position === 'GKP' && b.position !== 'GKP') return -1;
-        if (a.position !== 'GKP' && b.position === 'GKP') return 1;
-        return (b.score || 0) - (a.score || 0);
-      }),
-      captain: startingXI.sort(sortByScore)[0] || null,
-      viceCaptain: startingXI.sort(sortByScore)[1] || null,
+      bench,
+      captain,
+      viceCaptain,
       expectedPoints: startingXI.reduce((sum, p) => sum + (p.xP || 0), 0),
       totalCost: squad.reduce((sum, p) => sum + (p.now_cost || 0), 0),
       topPicks: {
@@ -265,10 +271,10 @@ export class FPLService {
     const myPicks = teamRes.data.picks.map((p: any) => {
       const player = baseData.players.find((pl: any) => pl.id === p.element);
       if (!player) return null;
-      const baseMapped = this.mapToScoredPlayer(player, baseData.teams, baseData.fixtures, baseData.nextEventId, riskMode);
+      const baseXp = oracle.getXP(player.id, baseData.nextEventId);
+      const baseMapped = this.mapToScoredPlayer(player, baseData.teams, baseData.fixtures, baseData.nextEventId, riskMode, baseXp);
       return {
         ...baseMapped,
-        xP: oracle.getXP(player.id, baseData.nextEventId),
         eo: oracle.getTop1kEO?.(player.id) ?? 0,
         ownership: oracle.getTop1kOwnership?.(player.id) ?? parseFloat(player.selected_by_percent || "0") ?? 0,
         isCaptain: p.is_captain,
@@ -319,8 +325,8 @@ export class FPLService {
         const inPlayer = baseData.players.find(p => p.id === ins[i]);
         const outPlayer = myPicks.find(p => p.id === outs[i]);
         if (inPlayer && outPlayer) {
-          const inMapped = FPLService.mapToScoredPlayer(inPlayer, baseData.teams, baseData.fixtures, baseData.nextEventId, riskMode);
-          const inScored = { ...inMapped, xP: oracle.getXP(inPlayer.id, baseData.nextEventId) };
+          const inXp = oracle.getXP(inPlayer.id, baseData.nextEventId);
+          const inScored = FPLService.mapToScoredPlayer(inPlayer, baseData.teams, baseData.fixtures, baseData.nextEventId, riskMode, inXp);
           
           const inVar = oracle.getVariance(inPlayer.id, baseData.nextEventId);
           const outVar = oracle.getVariance(outPlayer.id, baseData.nextEventId);
