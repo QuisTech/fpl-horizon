@@ -125,6 +125,7 @@ export class FPLService {
 
     const oracle = new CSVOracle('data/fplform_scraped.csv', players, riskMode, fixtures, teams, nextEventId);
 
+    const available = players.filter(p => p.status === 'a' || p.chance_of_playing_next_round === 100);
     const scored = available.map(p => {
       const baseXp = oracle.getXP(p.id, nextEventId);
       const mapped = this.mapToScoredPlayer(p, teams, fixtures, nextEventId, riskMode, baseXp);

@@ -84,29 +84,16 @@ describe('FPLService - Scoring Logic', () => {
     }
   ];
 
-  it('should calculate higher score for better fixtures', () => {
-    const scoreEasy = FPLService.calculatePlayerScore(mockPlayer, mockFixtures, 30, 'safe');
-    
-    const hardFixtures: FPLFixture[] = [
-      {
-        id: 101,
-        team_h: 1,
-        team_a: 2,
-        team_h_difficulty: 5,
-        team_a_difficulty: 2,
-        event: 30,
-        finished: false
-      }
-    ];
-    
-    const scoreHard = FPLService.calculatePlayerScore(mockPlayer, hardFixtures, 30, 'safe');
-    expect(scoreEasy).toBeGreaterThan(scoreHard);
+  it('should apply premium captaincy protection', () => {
+    // mockPlayer costs 12.5m, so it gets the 1.15x multiplier
+    const scoreSafe = FPLService.calculatePlayerScore(10.0, mockPlayer, 'safe');
+    expect(scoreSafe).toBeCloseTo(11.5);
   });
 
   it('should apply risk multiplier for differentials in aggressive mode', () => {
-    const differentialPlayer = { ...mockPlayer, selected_by_percent: '4.9' };
-    const scoreSafe = FPLService.calculatePlayerScore(differentialPlayer, mockFixtures, 30, 'safe');
-    const scoreAggressive = FPLService.calculatePlayerScore(differentialPlayer, mockFixtures, 30, 'aggressive');
+    const differentialPlayer = { ...mockPlayer, selected_by_percent: '4.9', now_cost: 50 }; // low cost to avoid premium multiplier
+    const scoreSafe = FPLService.calculatePlayerScore(10.0, differentialPlayer, 'safe');
+    const scoreAggressive = FPLService.calculatePlayerScore(10.0, differentialPlayer, 'aggressive');
     
     expect(scoreAggressive).toBeGreaterThan(scoreSafe);
   });
