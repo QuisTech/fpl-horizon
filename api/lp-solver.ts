@@ -9,7 +9,7 @@ interface LPSolverModel {
   ints: Record<string, 1>;
 }
 
-export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: number, horizon: number = 8, riskMode: string = 'safe'): number[] {
+export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: number, horizon: number = 8, riskMode: string = 'safe', availableIds?: Set<number>): number[] {
   const allIds = oracle.getAllPlayerIds();
   
   const model: LPSolverModel = {
@@ -28,6 +28,8 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
   };
 
   allIds.forEach(id => {
+    if (availableIds && !availableIds.has(id)) return;
+    
     const team = oracle.getTeam(id);
     if (!model.constraints[`team_${team}`]) {
       model.constraints[`team_${team}`] = { max: 3 };
@@ -42,17 +44,20 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
       score += oracle.getXP(id, gameweek + i);
     }
     
-    // Add deterministic tie-breaker to prevent search explosion in branch-and-bound LP solver
-    if (score > 0 && riskMode === 'value') {
-      score += (id % 10000) * 1e-4;
-    }
-    
     const cost = oracle.getCost(id);
+    const costInMillions = cost / 10;
+
+    // Value mode ROI transformation
+    if (riskMode === 'value') {
+      if (costInMillions > 0) {
+        score = score / costInMillions;
+      }
+      score += (id % 10000) * 1e-4; // deterministic tie-breaker
+    }
 
     // Apply EO/Risk utility adjustments to the LP objective score
     if (score > 0 && riskMode !== 'value') {
       // 1. Premium Captaincy Protection
-      const costInMillions = cost / 10;
       if (costInMillions >= 10.0) {
         score *= 1.15;
       } else if (costInMillions >= 8.0) {
@@ -106,7 +111,8 @@ export function solveOptimalTransfers(
   bank: number, 
   maxTransfers: number,
   horizon: number = 8,
-  riskMode: string = 'safe'
+  riskMode: string = 'safe',
+  availableIds?: Set<number>
 ): { squad: number[]; transfersIn: number[]; transfersOut: number[] } | null {
   const allIds = oracle.getAllPlayerIds();
   const currentSet = new Set(currentSquad);
@@ -133,6 +139,8 @@ export function solveOptimalTransfers(
   };
 
   allIds.forEach(id => {
+    if (availableIds && !availableIds.has(id)) return;
+    
     const team = oracle.getTeam(id);
     if (!model.constraints[`team_${team}`]) {
       model.constraints[`team_${team}`] = { max: 3 };
@@ -147,17 +155,20 @@ export function solveOptimalTransfers(
       score += oracle.getXP(id, gameweek + i);
     }
     
-    // Add deterministic tie-breaker to prevent search explosion in branch-and-bound LP solver
-    if (score > 0 && riskMode === 'value') {
-      score += (id % 10000) * 1e-4;
+    const cost = oracle.getCost(id);
+    const costInMillions = cost / 10;
+    
+    // Value mode ROI transformation
+    if (riskMode === 'value') {
+      if (costInMillions > 0) {
+        score = score / costInMillions;
+      }
+      score += (id % 10000) * 1e-4; // deterministic tie-breaker
     }
     
-    const cost = oracle.getCost(id);
-
     // Apply EO/Risk utility adjustments to the LP objective score
     if (score > 0 && riskMode !== 'value') {
       // 1. Premium Captaincy Protection
-      const costInMillions = cost / 10;
       if (costInMillions >= 10.0) {
         score *= 1.15;
       } else if (costInMillions >= 8.0) {
