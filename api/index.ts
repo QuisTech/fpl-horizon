@@ -83,25 +83,46 @@ export class FPLService {
     return result;
   }
 
-  static calculatePlayerScore(baseXp: number, player: FPLPlayer, riskMode: string): number {
+  static calculatePlayerScore(baseXp: number, player: FPLPlayer, riskMode: string, eo: number = 0): number {
     let score = baseXp;
-    
-    if (riskMode !== 'value') {
-      if (riskMode === 'aggressive' && player.selected_by_percent && parseFloat(player.selected_by_percent) < 5) {
-        score *= 1.25;
-      }
+    const costInMillions = player.now_cost / 10;
 
-      // Premium player protection (captaincy value)
-      // Elite assets are worth more than their PPM suggests because you captain them
-      const costInMillions = player.now_cost / 10;
+    if (riskMode === 'value') {
+      if (costInMillions > 0) {
+        score = baseXp / costInMillions;
+      }
+      return score;
+    }
+
+    if (score > 0) {
+      // 1. Premium Captaincy Protection
       if (costInMillions >= 10.0) score *= 1.15;
       else if (costInMillions >= 8.0) score *= 1.08;
+
+      // 2. Smooth EO Sentiment scaling
+      const effectiveEo = eo || parseFloat(player.selected_by_percent || "0") || 0;
+      if (riskMode === 'safe') {
+        score *= (1 + 0.15 * (effectiveEo / 100));
+      } else if (riskMode === 'aggressive') {
+        score *= (1 + 0.25 * (1 - effectiveEo / 100));
+        if (effectiveEo < 5 || (player.selected_by_percent && parseFloat(player.selected_by_percent) < 5)) {
+          score *= 1.25;
+        }
+      }
     }
 
     return score;
   }
 
-  static mapToScoredPlayer(p: FPLPlayer, teams: FPLTeam[], fixtures: FPLFixture[], nextEventId: number, riskMode: string, baseXp: number = 0): ScoredPlayer {
+  static mapToScoredPlayer(
+    p: FPLPlayer, 
+    teams: FPLTeam[], 
+    fixtures: FPLFixture[], 
+    nextEventId: number, 
+    riskMode: string, 
+    baseXp: number = 0,
+    eo: number = 0
+  ): ScoredPlayer {
     const posMap: Record<number, string> = { 1: "GKP", 2: "DEF", 3: "MID", 4: "FWD" };
     const position = posMap[p.element_type] || "MID";
     const team = teams.find(t => t.id === p.team);
@@ -111,7 +132,7 @@ export class FPLService {
       position,
       team_name: team?.name || "Unknown",
       team_short_name: team?.short_name || "UNK",
-      score: this.calculatePlayerScore(baseXp, p, riskMode),
+      score: this.calculatePlayerScore(baseXp, p, riskMode, eo),
       xP: baseXp,
       ppm: (p.total_points || 0) / (p.now_cost / 10),
       next_fixtures: [],
@@ -128,8 +149,9 @@ export class FPLService {
     const available = players.filter(p => p.status === 'a' || p.chance_of_playing_next_round === 100);
     const scored = available.map(p => {
       const baseXp = oracle.getXP(p.id, nextEventId);
-      const mapped = this.mapToScoredPlayer(p, teams, fixtures, nextEventId, riskMode, baseXp);
-      mapped.eo = oracle.getTop1kEO?.(p.id) ?? 0;
+      const eo = oracle.getTop1kEO?.(p.id) ?? parseFloat(p.selected_by_percent || "0") ?? 0;
+      const mapped = this.mapToScoredPlayer(p, teams, fixtures, nextEventId, riskMode, baseXp, eo);
+      mapped.eo = eo;
       mapped.ownership = oracle.getTop1kOwnership?.(p.id) ?? parseFloat(p.selected_by_percent || "0") ?? 0;
       return mapped;
     });

@@ -2,20 +2,16 @@ import { FPLService } from './api/index.js';
 
 (async () => {
   try {
-    console.log('Testing V3 Endpoint Integration with team ID 3018660...');
-    const response = await FPLService.syncTeam('3018660', 'safe');
+    console.log('Testing FPL Horizon Squad Recommendations across all 3 modes...\n');
     
-    console.log('\n--- V3 Engine Output ---');
-    console.log(`Transfers Suggested Count: ${response.transfers.length}`);
-    response.transfers.forEach(t => {
-      console.log(`  - Recommended Swap: Out ${t.out.web_name} -> In ${t.in.web_name} (+${t.xPDelta.toFixed(2)} xP)`);
-    });
-    response.chips.forEach(c => {
-      if (c.recommendation === 'STRONG BUY') {
-        console.log(`🔥 ENGINE TRIGGERED CHIP: ${c.chip}`);
-        console.log(`   Reason: ${c.reason}`);
-      }
-    });
+    for (const mode of ['safe', 'aggressive', 'value'] as const) {
+      const rec = await FPLService.getRecommendations(mode, 1000);
+      console.log(`=== MODE: ${mode.toUpperCase()} ===`);
+      console.log(`Team Expected Points: ${rec.expectedPoints.toFixed(1)} xP`);
+      console.log(`Total Cost: £${(rec.totalCost / 10).toFixed(1)}M`);
+      console.log(`Captain: ${rec.captain?.web_name || 'None'} (xP: ${rec.captain?.xP?.toFixed(1)}, score: ${rec.captain?.score?.toFixed(1)})`);
+      console.log(`Starting XI: ${rec.startingXI.map(p => `${p.web_name} (${p.xP?.toFixed(1)} xP)`).join(', ')}\n`);
+    }
 
   } catch (err: any) {
     console.error('Test Failed:', err);

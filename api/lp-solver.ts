@@ -9,6 +9,51 @@ interface LPSolverModel {
   ints: Record<string, 1>;
 }
 
+export function calculatePlayerUtility(
+  oracle: XPOracle,
+  id: number,
+  gameweek: number,
+  horizon: number,
+  riskMode: string
+): { score: number; rawXP: number } {
+  let rawXP = 0;
+  for (let i = 0; i < horizon; i++) {
+    rawXP += oracle.getXP(id, gameweek + i);
+  }
+
+  let score = rawXP;
+  const cost = oracle.getCost(id);
+  const costInMillions = cost / 10;
+
+  if (riskMode === 'value') {
+    if (costInMillions > 0) {
+      score = score / costInMillions;
+    }
+    score += (id % 10000) * 1e-4; // deterministic tie-breaker
+    return { score, rawXP };
+  }
+
+  if (score > 0) {
+    // 1. Premium Captaincy Protection
+    if (costInMillions >= 10.0) {
+      score *= 1.15;
+    } else if (costInMillions >= 8.0) {
+      score *= 1.08;
+    }
+
+    // 2. Smooth EO Sentiment scaling
+    if (riskMode === 'safe') {
+      const eo = oracle.getTop1kEO?.(id) ?? 0;
+      score *= (1 + 0.15 * (eo / 100));
+    } else if (riskMode === 'aggressive') {
+      const eo = oracle.getTop1kEO?.(id) ?? 0;
+      score *= (1 + 0.25 * (1 - eo / 100));
+    }
+  }
+
+  return { score, rawXP };
+}
+
 export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: number, horizon: number = 8, riskMode: string = 'safe', availableIds?: Set<number>): number[] {
   const allIds = oracle.getAllPlayerIds();
   
@@ -38,41 +83,8 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
     const v = `p_${id}`;
     const pos = oracle.getPosition(id).toLowerCase(); // "gkp", "def", "mid", "fwd"
     
-    // Sum expected points over the lookahead horizon
-    let score = 0;
-    for (let i = 0; i < horizon; i++) {
-      score += oracle.getXP(id, gameweek + i);
-    }
-    
+    const { score } = calculatePlayerUtility(oracle, id, gameweek, horizon, riskMode);
     const cost = oracle.getCost(id);
-    const costInMillions = cost / 10;
-
-    // Value mode ROI transformation
-    if (riskMode === 'value') {
-      if (costInMillions > 0) {
-        score = score / costInMillions;
-      }
-      score += (id % 10000) * 1e-4; // deterministic tie-breaker
-    }
-
-    // Apply EO/Risk utility adjustments to the LP objective score
-    if (score > 0 && riskMode !== 'value') {
-      // 1. Premium Captaincy Protection
-      if (costInMillions >= 10.0) {
-        score *= 1.15;
-      } else if (costInMillions >= 8.0) {
-        score *= 1.08;
-      }
-
-      // 2. Smooth EO Sentiment scaling
-      if (riskMode === 'safe') {
-        const eo = oracle.getTop1kEO?.(id) ?? 0;
-        score *= (1 + 0.15 * (eo / 100));
-      } else if (riskMode === 'aggressive') {
-        const eo = oracle.getTop1kEO?.(id) ?? 0;
-        score *= (1 + 0.25 * (1 - eo / 100));
-      }
-    }
 
     // Only consider players who have a score > 0 to keep the model small
     if (score > 0) {
@@ -149,41 +161,8 @@ export function solveOptimalTransfers(
     const v = `p_${id}`;
     const pos = oracle.getPosition(id).toLowerCase();
     
-    // Sum expected points over the lookahead horizon
-    let score = 0;
-    for (let i = 0; i < horizon; i++) {
-      score += oracle.getXP(id, gameweek + i);
-    }
-    
+    const { score } = calculatePlayerUtility(oracle, id, gameweek, horizon, riskMode);
     const cost = oracle.getCost(id);
-    const costInMillions = cost / 10;
-    
-    // Value mode ROI transformation
-    if (riskMode === 'value') {
-      if (costInMillions > 0) {
-        score = score / costInMillions;
-      }
-      score += (id % 10000) * 1e-4; // deterministic tie-breaker
-    }
-    
-    // Apply EO/Risk utility adjustments to the LP objective score
-    if (score > 0 && riskMode !== 'value') {
-      // 1. Premium Captaincy Protection
-      if (costInMillions >= 10.0) {
-        score *= 1.15;
-      } else if (costInMillions >= 8.0) {
-        score *= 1.08;
-      }
-
-      // 2. Smooth EO Sentiment scaling
-      if (riskMode === 'safe') {
-        const eo = oracle.getTop1kEO?.(id) ?? 0;
-        score *= (1 + 0.15 * (eo / 100));
-      } else if (riskMode === 'aggressive') {
-        const eo = oracle.getTop1kEO?.(id) ?? 0;
-        score *= (1 + 0.25 * (1 - eo / 100));
-      }
-    }
 
     const isCurrent = currentSet.has(id);
 

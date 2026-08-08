@@ -85,8 +85,9 @@ describe('FPLService - Scoring Logic', () => {
   ];
 
   it('should apply premium captaincy protection', () => {
-    // mockPlayer costs 12.5m, so it gets the 1.15x multiplier
-    const scoreSafe = FPLService.calculatePlayerScore(10.0, mockPlayer, 'safe');
+    // mockPlayer costs 12.5m, so it gets the 1.15x multiplier (with 0% EO)
+    const zeroEoPlayer = { ...mockPlayer, selected_by_percent: '0.0' };
+    const scoreSafe = FPLService.calculatePlayerScore(10.0, zeroEoPlayer, 'safe');
     expect(scoreSafe).toBeCloseTo(11.5);
   });
 
@@ -117,9 +118,9 @@ describe('CSVOracle Ingestion & Strategy Multipliers', () => {
     fs.writeFileSync(tempCsvPath, csvContent, 'utf-8');
 
     const realPlayersMetadata = [
-      { id: 300, web_name: 'Salah', selected_by_percent: '45.0' },
-      { id: 450, web_name: 'Isak', selected_by_percent: '35.0' },
-      { id: 600, web_name: 'Mbeumo', selected_by_percent: '4.2' } // Differential MID
+      { id: 300, web_name: 'Salah', selected_by_percent: '45.0', now_cost: 125 },
+      { id: 450, web_name: 'Isak', selected_by_percent: '35.0', now_cost: 85 },
+      { id: 600, web_name: 'Mbeumo', selected_by_percent: '4.2', now_cost: 70 } // Differential MID
     ];
 
     // Safe mode oracle
