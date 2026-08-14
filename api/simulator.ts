@@ -46,26 +46,34 @@ export class Simulator {
       pos: oracle.getPosition(id)
     }));
 
-    playerProjections.sort((a, b) => b.xp - a.xp);
+    let starters = playerProjections;
+    if (state.activeChip !== 'BB') {
+      const gkps = playerProjections.filter(p => p.pos === 'GKP').sort((a, b) => b.xp - a.xp);
+      const outfielders = playerProjections.filter(p => p.pos !== 'GKP').sort((a, b) => b.xp - a.xp);
+      starters = [
+        ...(gkps.length > 0 ? [gkps[0]] : []),
+        ...outfielders.slice(0, 10)
+      ];
+    }
+
+    starters.sort((a, b) => b.xp - a.xp);
 
     let gwScore = 0;
     let gwVariance = 0;
-    if (playerProjections.length > 0) {
+    if (starters.length > 0) {
       // Triple Captain Chip Check
       if (state.activeChip === 'TC') {
-        gwScore += playerProjections[0].xp * 3;
-        gwVariance += playerProjections[0].variance * 9; // 3^2 = 9
+        gwScore += starters[0].xp * 3;
+        gwVariance += starters[0].variance * 9; // 3^2 = 9
       } else {
-        gwScore += playerProjections[0].xp * 2;
-        gwVariance += playerProjections[0].variance * 4; // 2^2 = 4
+        gwScore += starters[0].xp * 2;
+        gwVariance += starters[0].variance * 4; // 2^2 = 4
       }
-    }
 
-    // Bench Boost check: Add all 15 players
-    const startersCount = state.activeChip === 'BB' ? 15 : 11;
-    for (let i = 1; i < Math.min(startersCount, playerProjections.length); i++) {
-      gwScore += playerProjections[i].xp;
-      gwVariance += playerProjections[i].variance;
+      for (let i = 1; i < starters.length; i++) {
+        gwScore += starters[i].xp;
+        gwVariance += starters[i].variance;
+      }
     }
 
     return { score: gwScore, variance: gwVariance };

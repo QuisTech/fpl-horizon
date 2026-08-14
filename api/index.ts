@@ -156,7 +156,7 @@ export class FPLService {
       return mapped;
     });
 
-    const availableIds = new Set(available.map(p => p.id));
+    const availableIds = new Set<number>(available.map(p => p.id));
     const optimalIds = solveOptimalSquad(oracle, nextEventId, budget, 8, riskMode, availableIds);
     const squad = scored.filter(p => optimalIds.includes(p.id));
     
@@ -168,7 +168,7 @@ export class FPLService {
     
     const mandatory = [gkps[0], ...defs.slice(0, 3), ...mids.slice(0, 2), ...fwds.slice(0, 1)].filter(Boolean) as ScoredPlayer[];
     const lockedIds = new Set(mandatory.map(p => p.id));
-    const others = squad.filter(p => !lockedIds.has(p.id)).sort(sortByScore);
+    const others = squad.filter(p => p.position !== "GKP" && !lockedIds.has(p.id)).sort(sortByScore);
     const startingXI = [...mandatory, ...others.slice(0, 11 - mandatory.length)].filter(Boolean) as ScoredPlayer[];
     
     const startingIds = new Set(startingXI.map(p => p.id));

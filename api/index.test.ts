@@ -729,4 +729,11 @@ describe('Simulator - Probabilistic Player Model & Expected Utility', () => {
     // Haaland's trajectory should end up with a higher utility score than Salah's in aggressive mode
     expect(resultsAggressHaaland[0].accumulatedScore).toBeGreaterThan(resultsAggressSalah[0].accumulatedScore);
   });
+
+  it('should select exactly 1 goalkeeper in starting XI even in VALUE mode', async () => {
+    const rec = await FPLService.getRecommendations('value', 1000);
+    const gkpCount = rec.startingXI.filter(p => p.position === 'GKP').length;
+    expect(gkpCount).toBe(1);
+    expect(rec.startingXI.length).toBe(11);
+  });
 });
