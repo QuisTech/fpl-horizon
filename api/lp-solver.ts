@@ -86,8 +86,10 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
     const { score } = calculatePlayerUtility(oracle, id, gameweek, horizon, riskMode);
     const cost = oracle.getCost(id);
 
-    // Only consider players who have a score > 0 to keep the model small
-    if (score > 0) {
+    const isLocked = !!(lockedIds && lockedIds.has(id));
+
+    // Include players with score > 0 OR players explicitly locked by the user
+    if (score > 0 || isLocked) {
       model.variables[v] = { 
         score, 
         cost, 
@@ -96,7 +98,7 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
         [`team_${team}`]: 1, 
         [v]: 1 
       };
-      model.constraints[v] = { max: 1 };
+      model.constraints[v] = isLocked ? { equal: 1 } : { max: 1 };
       model.ints[v] = 1;
     }
   });
