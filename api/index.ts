@@ -169,8 +169,8 @@ export class FPLService {
     const fwds = squad.filter(p => p.position === "FWD").sort(sortByScore);
     
     const mandatory = [gkps[0], ...defs.slice(0, 3), ...mids.slice(0, 2), ...fwds.slice(0, 1)].filter(Boolean) as ScoredPlayer[];
-    const lockedIds = new Set(mandatory.map(p => p.id));
-    const others = squad.filter(p => p.position !== "GKP" && !lockedIds.has(p.id)).sort(sortByScore);
+    const mandatoryIds = new Set(mandatory.map(p => p.id));
+    const others = squad.filter(p => p.position !== "GKP" && !mandatoryIds.has(p.id)).sort(sortByScore);
     const startingXI = [...mandatory, ...others.slice(0, 11 - mandatory.length)].filter(Boolean) as ScoredPlayer[];
     
     const startingIds = new Set(startingXI.map(p => p.id));
