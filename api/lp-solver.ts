@@ -54,7 +54,7 @@ export function calculatePlayerUtility(
   return { score, rawXP };
 }
 
-export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: number, horizon: number = 8, riskMode: string = 'safe', availableIds?: Set<number>): number[] {
+export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: number, horizon: number = 8, riskMode: string = 'safe', availableIds?: Set<number>, lockedIds?: Set<number>, excludedIds?: Set<number>): number[] {
   const allIds = oracle.getAllPlayerIds();
   
   const model: LPSolverModel = {
@@ -74,7 +74,7 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
 
   allIds.forEach(id => {
     if (availableIds && !availableIds.has(id)) return;
-    
+    if (excludedIds && excludedIds.has(id)) return;
     const team = oracle.getTeam(id);
     if (!model.constraints[`team_${team}`]) {
       model.constraints[`team_${team}`] = { max: 3 };

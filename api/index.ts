@@ -141,7 +141,7 @@ export class FPLService {
     };
   }
 
-  static async getRecommendations(riskMode: string, budget: number = 1000): Promise<RecommendationResponse> {
+  static async getRecommendations(riskMode: string, budget: number = 1000, lockedPlayerIds: number[] = [], excludedPlayerIds: number[] = []): Promise<RecommendationResponse> {
     const { players, teams, fixtures, nextEventId } = await this.getBaseData();
 
     const oracle = new CSVOracle('data/fplform_scraped.csv', players, riskMode, fixtures, teams, nextEventId);
@@ -157,7 +157,9 @@ export class FPLService {
     });
 
     const availableIds = new Set<number>(available.map(p => p.id));
-    const optimalIds = solveOptimalSquad(oracle, nextEventId, budget, 8, riskMode, availableIds);
+    const lockedSet = new Set<number>(lockedPlayerIds);
+    const excludedSet = new Set<number>(excludedPlayerIds);
+    const optimalIds = solveOptimalSquad(oracle, nextEventId, budget, 8, riskMode, availableIds, lockedSet, excludedSet);
     const squad = scored.filter(p => optimalIds.includes(p.id));
     
     const sortByScore = (a: ScoredPlayer, b: ScoredPlayer) => (b.score || 0) - (a.score || 0);
@@ -418,7 +420,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (url.includes('/api/recommendations')) {
       const budget = query.budget ? parseInt(query.budget as string) : 1000;
-      const result = await FPLService.getRecommendations(riskMode, budget);
+      const lockedParam = query.locked ? (query.locked as string).split(',').map(Number).filter(Boolean) : [];
+      const excludedParam = query.excluded ? (query.excluded as string).split(',').map(Number).filter(Boolean) : [];
+      const result = await FPLService.getRecommendations(riskMode, budget, lockedParam, excludedParam);
       return res.status(200).json(result);
     } 
     
