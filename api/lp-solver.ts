@@ -81,7 +81,10 @@ export function solveOptimalSquad(oracle: XPOracle, gameweek: number, budget: nu
     }
 
     const v = `p_${id}`;
-    const pos = oracle.getPosition(id).toLowerCase(); // "gkp", "def", "mid", "fwd"
+    let rawPos = oracle.getPosition(id) || 'MID';
+    if (rawPos === 'GK') rawPos = 'GKP';
+    const pos = rawPos.toLowerCase();
+    if (!['gkp', 'def', 'mid', 'fwd'].includes(pos)) return;
     
     const { score } = calculatePlayerUtility(oracle, id, gameweek, horizon, riskMode);
     const cost = oracle.getCost(id);
