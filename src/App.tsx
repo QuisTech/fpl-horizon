@@ -15,9 +15,12 @@ import { HorizonPositioning } from './components/HorizonPositioning';
 import { Camera } from 'lucide-react';
 import { cn } from './lib/utils';
 
+import { SnapshotToast, SnapshotToastData } from './components/SnapshotToast';
+
 export default function App() {
   const [riskMode, setRiskMode] = useState<'safe' | 'aggressive' | 'value'>('safe');
   const [tab, setTab] = useState<'horizon' | 'pitch' | 'picks' | 'transfers' | 'chips' | 'performance'>('horizon');
+  const [snapshotToast, setSnapshotToast] = useState<SnapshotToastData | null>(null);
   
   const { 
     data, 
@@ -48,7 +51,12 @@ export default function App() {
     if (data) {
       const success = takeSnapshot(data.nextEventId, data, riskMode);
       if (success) {
-        alert(`Snapshot taken for GW${data.nextEventId} [${riskMode.toUpperCase()}]`);
+        setSnapshotToast({
+          gwId: data.nextEventId,
+          riskMode,
+          riskLabel: riskMode.toUpperCase(),
+          timestamp: Date.now()
+        });
       }
     }
   };
@@ -165,6 +173,7 @@ export default function App() {
           <FixtureList data={data} />
         </div>
       </div>
+      <SnapshotToast toast={snapshotToast} onClose={() => setSnapshotToast(null)} />
     </div>
   );
 }
