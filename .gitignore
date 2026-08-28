@@ -11,3 +11,5 @@ coverage/
 horizon-preview.png
 
 .vercel
+
+data/backtest_results_*.json
