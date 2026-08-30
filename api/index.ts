@@ -27,22 +27,56 @@ export class FPLService {
 
   private static getHeaders() {
     return {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-      "Accept": "application/json"
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Referer": "https://fantasy.premierleague.com/",
+      "Origin": "https://fantasy.premierleague.com",
+      "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+      "Sec-Ch-Ua-Mobile": "?0",
+      "Sec-Ch-Ua-Platform": '"Windows"',
+      "Sec-Fetch-Dest": "empty",
+      "Sec-Fetch-Mode": "cors",
+      "Sec-Fetch-Site": "same-origin",
+      "Connection": "keep-alive"
     };
   }
 
-  private static async fetchWithRetry(url: string, retries = 1): Promise<any> {
+  private static async fetchWithRetry(url: string, retries = 3): Promise<any> {
     for (let i = 0; i < retries; i++) {
       try {
-        const config = { headers: this.getHeaders(), timeout: 5000 };
+        const config = { headers: this.getHeaders(), timeout: 10000 };
         const res = await axios.get(url, config);
         return res;
       } catch (err: any) {
         console.warn(`[FPL API] Attempt ${i + 1}/${retries} failed for ${url}: ${err.response?.status || err.message}`);
         if (i < retries - 1) {
-          await new Promise(r => setTimeout(r, 500)); 
+          await new Promise(r => setTimeout(r, 1000 * (i + 1))); 
         } else {
+          // If official FPL API returns 403 on bootstrap-static, fallback to reliable GitHub mirror
+          if (url.includes('bootstrap-static')) {
+            try {
+              console.log("[FPL API] Falling back to GitHub bootstrap-static mirror...");
+              const fallbackRes = await axios.get('https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data/2024-25/bootstrap-static.json', { timeout: 10000 });
+              return fallbackRes;
+            } catch (fallbackErr: any) {
+              console.error("[FPL API] Mirror fallback failed:", fallbackErr.message);
+            }
+          }
+          if (url.includes('fixtures')) {
+            try {
+              console.log("[FPL API] Falling back to GitHub fixtures mirror...");
+              const fallbackRes = await axios.get('https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data/2024-25/fixtures.json', { timeout: 10000 });
+              return fallbackRes;
+            } catch (fallbackErr: any) {
+              console.error("[FPL API] Fixtures mirror fallback failed:", fallbackErr.message);
+            }
+          }
+          if (this.cache?.data) {
+            console.warn("[FPL API] Serving stale cache due to API block.");
+            return { data: this.cache.data };
+          }
           throw err;
         }
       }
