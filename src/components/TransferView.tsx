@@ -241,7 +241,7 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
               </span>
             </div>
 
-            {/* Grand Cru V3 Beam Search 8-Gameweek Horizon Banner */}
+            {/* 8-Gameweek Strategy Squad Horizon Summary Banner */}
             {transfers.length > 0 && transfers[0].squad8GwXpBefore !== undefined && (
               <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-fpl-purple/40 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md relative overflow-hidden">
                 <div className="flex items-center gap-2.5">
@@ -250,22 +250,22 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black uppercase text-white tracking-wider flex items-center gap-1.5">
-                      Grand Cru 8-Gameweek Horizon Projection
+                      8-Gameweek Strategy Squad Horizon
                     </span>
                     <span className="text-[9px] text-slate-400 font-medium">
-                      V3 Beam Search dynamic trajectory cumulative projections for your 15-man squad
+                      Multi-strategy scraped projection & squad lookahead analysis for your 15-man squad
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800">
                   <div className="text-right">
-                    <span className="text-[8px] text-slate-500 font-bold uppercase block">Current Trajectory (8-GW)</span>
+                    <span className="text-[8px] text-slate-500 font-bold uppercase block">Current Squad (8-GW)</span>
                     <span className="text-xs font-mono font-black text-slate-300">{transfers[0].squad8GwXpBefore} pts</span>
                   </div>
                   <ArrowRightCircle className="w-3.5 h-3.5 text-fpl-purple shrink-0" />
                   <div className="text-right">
-                    <span className="text-[8px] text-fpl-green font-bold uppercase block">Optimized Trajectory (8-GW)</span>
+                    <span className="text-[8px] text-fpl-green font-bold uppercase block">Strategy Squad (8-GW)</span>
                     <span className="text-xs font-mono font-black text-fpl-green">{transfers[0].squad8GwXpAfter} pts</span>
                   </div>
                   <div className="bg-fpl-green/10 border border-fpl-green/30 px-2 py-1 rounded-lg text-right shrink-0">
@@ -284,7 +284,13 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
               </div>
             ) : (
               <div className="space-y-3">
-                {transfers.map((rec, i) => {
+                {[...transfers]
+                  .sort((a, b) => {
+                    const scoreA = a.strategicScore ?? a.xPDelta ?? 0;
+                    const scoreB = b.strategicScore ?? b.xPDelta ?? 0;
+                    return scoreB - scoreA;
+                  })
+                  .map((rec, i) => {
                   const isStartingXI = (rec.out.position_in_squad ?? 0) <= 11;
                   const priceDiff = (rec.out.now_cost - rec.in.now_cost) / 10;
                   const isHovered = hoveredSwapIndex === i;
@@ -399,19 +405,19 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
                                   : "Equal Price"}
                             </span>
                           </div>
-                          {i === 0 && (
+                          {i === 0 && (rec.strategicScore || rec.xPDelta) > 0 && (
                             <span className="text-fpl-green font-black uppercase tracking-widest text-[8px] flex items-center gap-1">
                               <Sparkles className="w-2.5 h-2.5 animate-spin" /> Top Swap Recommendation
                             </span>
                           )}
                         </div>
 
-                        {/* Grand Cru Beam Search Swap Impact Row */}
+                        {/* Strategy Horizon Swap Impact Row */}
                         {rec.horizon8GwDelta !== undefined && (
                           <div className="bg-slate-950/70 border border-fpl-border/30 rounded-lg p-1.5 flex flex-wrap items-center justify-between gap-1.5">
                             <div className="flex items-center gap-1 text-slate-400">
                               <Layers className="w-3 h-3 text-fpl-purple shrink-0" />
-                              <span className="font-bold uppercase tracking-wider text-[8px]">Grand Cru 8-GW Impact:</span>
+                              <span className="font-bold uppercase tracking-wider text-[8px]">Strategy 8-GW Impact:</span>
                             </div>
                             <div className="flex items-center gap-2 font-mono">
                               <span className="text-slate-400 text-[8px]">In: <span className="text-slate-200 font-bold">{rec.horizon8GwXpIn} pts</span></span>
