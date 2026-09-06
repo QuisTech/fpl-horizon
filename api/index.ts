@@ -600,26 +600,47 @@ export class FPLService {
       transfers = this.generateTransfers(myPicks, candidates, oracle, riskMode, baseData.nextEventId);
     }
 
+    const targetEvent = baseData.nextEventId;
+    const isSet1 = targetEvent <= 19;
+    const remainingGwsInSet = isSet1 ? Math.max(0, 19 - targetEvent) : Math.max(0, 38 - targetEvent);
+    const setHeader = isSet1 ? "Set 1 (GW1–19)" : "Set 2 (GW20–38)";
+
     const chips: ChipAdvice[] = [
       {
-        chip: "Wildcard",
+        chip: `Wildcard (${setHeader})`,
         recommendation: optimalFirstMove === 'WC' ? "STRONG BUY" : "HOLD",
-        reason: optimalFirstMove === 'WC' ? "V3 Engine recommends activating Wildcard to restructure your squad." : "Hold for upcoming major fixture swings or injury crises."
+        reason: optimalFirstMove === 'WC' 
+          ? "V3 Engine recommends activating Wildcard to restructure your squad." 
+          : isSet1 
+            ? `Set 1 Wildcard expires at the GW19 deadline (${remainingGwsInSet} GWs left). Optimal window: GW6–GW8 during the international break.`
+            : "Set 2 Wildcard active. Hold for major spring Double Gameweek preparation."
       },
       {
-        chip: "Free Hit",
+        chip: `Free Hit (${setHeader})`,
         recommendation: optimalFirstMove === 'FH' ? "STRONG BUY" : "HOLD",
-        reason: optimalFirstMove === 'FH' ? "V3 Engine recommends a Free Hit this week." : "Hold for future Blank or Double Gameweeks."
+        reason: optimalFirstMove === 'FH' 
+          ? "V3 Engine recommends a Free Hit this week." 
+          : isSet1 
+            ? `Set 1 Free Hit expires at GW19 (${remainingGwsInSet} GWs left). Hold for an autumn fixture clash, European rotation, or postponement.`
+            : "Set 2 Free Hit active. Hold for the major spring Blank Gameweek (GW29/30)."
       },
       {
-        chip: "Bench Boost",
+        chip: `Bench Boost (${setHeader})`,
         recommendation: optimalFirstMove === 'BB' ? "STRONG BUY" : "HOLD",
-        reason: optimalFirstMove === 'BB' ? "V3 Engine detects extraordinary bench expected points (>= 16.0 xP)." : "Hold for a Double Gameweek where your 4 bench players play multiple fixtures."
+        reason: optimalFirstMove === 'BB' 
+          ? "V3 Engine detects extraordinary bench expected points (>= 16.0 xP). Play now!" 
+          : isSet1 
+            ? `Set 1 Bench Boost expires at GW19 (${remainingGwsInSet} GWs left). Optimal play: deploy immediately after your Wildcard when all 15 squad players are fit and starting.`
+            : "Set 2 Bench Boost active. Hold for the massive spring Double Gameweek (GW34/GW37)."
       },
       {
-        chip: "Triple Captain",
+        chip: `Triple Captain (${setHeader})`,
         recommendation: optimalFirstMove === 'TC' ? "STRONG BUY" : "HOLD",
-        reason: optimalFirstMove === 'TC' ? "V3 Engine detects an elite captaincy matchup (>= 9.5 xP)." : "Hold for a premier captain in a favorable Double Gameweek."
+        reason: optimalFirstMove === 'TC' 
+          ? "V3 Engine detects an elite captaincy matchup (>= 9.5 xP). Play now!" 
+          : isSet1 
+            ? `Set 1 Triple Captain expires at GW19 (${remainingGwsInSet} GWs left). Prime target: Haaland in GW5 (vs Sunderland at Home) or GW7.`
+            : "Set 2 Triple Captain active. Hold for a premium asset in a confirmed Double Gameweek."
       }
     ];
 
@@ -677,8 +698,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (url.includes('/api/live')) {
       const eventId = url.split('/').pop()?.split('?')[0];
       if (!eventId) return res.status(400).json({ error: "Missing Event ID" });
-      const liveRes = await axios.get(`${FPL_BASE_URL}/event/${eventId}/live/`, { headers: (FPLService as any).getHeaders() });
-      return res.status(200).json(liveRes.data);
+      const [liveRes, fixturesRes] = await Promise.all([
+        axios.get(`${FPL_BASE_URL}/event/${eventId}/live/`, { headers: (FPLService as any).getHeaders() }),
+        axios.get(`${FPL_BASE_URL}/fixtures/?event=${eventId}`, { headers: (FPLService as any).getHeaders() }).catch(() => ({ data: [] }))
+      ]);
+      return res.status(200).json({
+        elements: liveRes.data.elements,
+        fixtures: fixturesRes.data || []
+      });
     }
 
     if (url.includes('/api/auto-snapshot')) {
