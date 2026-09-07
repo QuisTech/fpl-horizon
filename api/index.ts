@@ -454,9 +454,9 @@ export class FPLService {
     ];
   }
 
-  static async syncTeam(teamId: string, riskMode: string): Promise<TeamSyncResponse> {
+  static async syncTeam(teamId: string, riskMode: string, targetGw?: number): Promise<TeamSyncResponse> {
     const baseData = await this.getBaseData();
-    const currentEvent = baseData.currentEventId || Math.max(1, baseData.nextEventId - 1);
+    const currentEvent = targetGw ? Number(targetGw) : (baseData.currentEventId || Math.max(1, baseData.nextEventId - 1));
     
     // 1. Initialize the V3 Engine Oracle first
     const oracle = new CSVOracle('data/fplform_scraped.csv', baseData.players, riskMode, baseData.fixtures, baseData.teams, baseData.nextEventId);
@@ -691,7 +691,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (url.includes('/api/sync')) {
       const teamId = url.split('/').pop()?.split('?')[0];
       if (!teamId) return res.status(400).json({ error: "Missing Team ID" });
-      const result = await FPLService.syncTeam(teamId, riskMode);
+      const targetGw = req.query?.gw ? parseInt(req.query.gw as string) : undefined;
+      const result = await FPLService.syncTeam(teamId, riskMode, targetGw);
       return res.status(200).json(result);
     }
 
