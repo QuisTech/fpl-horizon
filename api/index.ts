@@ -224,7 +224,7 @@ export class FPLService {
 
     if (riskMode === 'value') {
       if (costInMillions > 0) {
-        score = baseXp / costInMillions;
+        score = (baseXp / costInMillions) * 6.7;
       }
       return score;
     }
