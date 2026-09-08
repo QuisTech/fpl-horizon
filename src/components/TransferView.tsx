@@ -276,22 +276,22 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="text-[10px] font-black uppercase text-white tracking-wider flex items-center gap-1.5 truncate">
-                      5-Gameweek Tactical Fixture Window
+                      Grand Cru 8-Gameweek Horizon Projection
                     </span>
                     <span className="text-[9px] text-slate-400 font-medium line-clamp-1 sm:line-clamp-none">
-                      FDR-weighted fixture difficulty & form projections for your 15-man squad
+                      V3 Beam Search dynamic trajectory cumulative projections for your 15-man squad
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 bg-slate-950/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-800 w-full sm:w-auto">
                   <div className="text-right">
-                    <span className="text-[8px] text-slate-500 font-bold uppercase block">Current Squad (8-GW)</span>
+                    <span className="text-[8px] text-slate-500 font-bold uppercase block">Current Trajectory (8-GW)</span>
                     <span className="text-xs font-mono font-black text-slate-300">{transfers[0].squad8GwXpBefore} pts</span>
                   </div>
                   <ArrowRightCircle className="w-3.5 h-3.5 text-fpl-purple shrink-0" />
                   <div className="text-right">
-                    <span className="text-[8px] text-fpl-green font-bold uppercase block">Strategy Squad (8-GW)</span>
+                    <span className="text-[8px] text-fpl-green font-bold uppercase block">Optimized Trajectory (8-GW)</span>
                     <span className="text-xs font-mono font-black text-fpl-green">{transfers[0].squad8GwXpAfter} pts</span>
                   </div>
                   <div className="bg-fpl-green/10 border border-fpl-green/30 px-2 py-1 rounded-lg text-right shrink-0">
@@ -442,7 +442,7 @@ export const TransferView = ({ syncedData, tier = 'ai-agent', setTab, userId }: 
                           <div className="bg-slate-950/70 border border-fpl-border/30 rounded-lg p-1.5 flex flex-wrap items-center justify-between gap-1.5">
                             <div className="flex items-center gap-1 text-slate-400">
                               <Layers className="w-3 h-3 text-fpl-purple shrink-0" />
-                              <span className="font-bold uppercase tracking-wider text-[8px]">Strategy 8-GW Impact:</span>
+                              <span className="font-bold uppercase tracking-wider text-[8px]">Grand Cru 8-GW Impact:</span>
                             </div>
                             <div className="flex items-center gap-2 font-mono">
                               <span className="text-slate-400 text-[8px]">In: <span className="text-slate-200 font-bold">{rec.horizon8GwXpIn} pts</span></span>
