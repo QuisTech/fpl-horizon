@@ -505,7 +505,7 @@ export class FPLService {
       const baseMapped = this.mapToScoredPlayer(player, baseData.teams, baseData.fixtures, baseData.nextEventId, riskMode, baseXp);
       return {
         ...baseMapped,
-        xP: Math.round(baseXp * 10) / 10,
+        xP: Math.round(baseMapped.score * 10) / 10,
         eo: oracle.getTop1kEO?.(player.id) ?? 0,
         ownership: oracle.getTop1kOwnership?.(player.id) ?? parseFloat(player.selected_by_percent || "0") ?? 0,
         isCaptain: p.is_captain,
