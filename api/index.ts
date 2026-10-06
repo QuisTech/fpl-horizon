@@ -353,7 +353,7 @@ export class FPLService {
       bench,
       captain,
       viceCaptain,
-      expectedPoints: startingXI.reduce((sum, p) => sum + (p.xP || 0), 0),
+      expectedPoints: startingXI.reduce((sum, p) => sum + (p.xP || 0), 0) + (captain ? (captain.xP || 0) : 0),
       totalCost: squad.reduce((sum, p) => sum + (p.now_cost || 0), 0),
       topPicks: {
         gkp: scored.filter(p => p.position === "GKP").sort(sortByScore).slice(0, 5),
